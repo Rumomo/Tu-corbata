@@ -1,0 +1,35 @@
+# Variables de entorno y credenciales
+.env
+.env.*
+!.env.example
+
+# Dependencias de PHP
+/vendor/
+
+# Dependencias de JavaScript, por si se añaden después
+/node_modules/
+
+# Archivos generados y temporales
+*.log
+*.tmp
+*.cache
+*.swp
+*.swo
+
+# Datos persistentes locales de Docker/MySQL
+mysql-data/
+database-data/
+docker-data/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Configuración local de editores
+.vscode/
+.idea/
+
+# Cobertura y resultados de pruebas
+/coverage/
+.phpunit.result.cache
