@@ -595,7 +595,246 @@ El modelo relacional transforma las entidades del modelo entidad-relación en ta
 - `DETALLE_PEDIDO.id_pedido` → `PEDIDO.id_pedido`
 - `DETALLE_PEDIDO.id_corbata` → `CORBATA.id_corbata`
 
-## 12. Tecnologías utilizadas
+## 12. Entorno de desarrollo con Docker
+
+Para desarrollar el proyecto Tu Corbata se ha preparado un entorno basado en Docker. Esto permite ejecutar los servicios necesarios de forma aislada y reproducible, sin depender de una instalación manual de PHP o MySQL en el equipo.
+
+El entorno está formado por los siguientes servicios:
+
+- PHP 8.3 con Apache, encargado de ejecutar la aplicación web.
+- MySQL 8, utilizado para almacenar la base de datos `TIENDA`.
+- phpMyAdmin, utilizado para administrar visualmente la base de datos.
+- Un volumen persistente para conservar los datos de MySQL.
+- Variables de entorno para configurar las credenciales y la conexión.
+
+### 12.1 Estructura del entorno
+
+El archivo `docker-compose.yml` coordina los distintos servicios del proyecto.
+
+La aplicación PHP se comunica con MySQL utilizando el nombre del servicio `mysql` como host interno.
+
+Las credenciales y el nombre de la base de datos se almacenan en un archivo `.env`, que no se incluye en el repositorio por motivos de seguridad.
+
+También se utiliza un archivo `.env.example` como plantilla de configuración.
+
+### 12.2 Puertos utilizados
+
+- Aplicación PHP y Apache: `http://localhost:8080`
+- phpMyAdmin: `http://localhost:8081`
+- MySQL: puerto `3306`
+
+### 12.3 Persistencia de datos
+
+Se ha configurado un volumen de Docker para conservar la información almacenada en MySQL aunque los contenedores se detengan o se vuelvan a crear.
+
+### 12.4 Comprobación del entorno
+
+Después de iniciar los contenedores, se comprobó:
+
+- El acceso correcto a la aplicación PHP.
+- El acceso correcto a phpMyAdmin.
+- La creación de la base de datos `TIENDA`.
+- La comunicación entre PHP y MySQL.
+- La conexión correcta utilizando las variables de entorno.
+
+### 12.5 Evidencia de la conexión
+
+La siguiente captura muestra la aplicación PHP ejecutándose correctamente y confirmando la conexión con la base de datos `TIENDA`.
+
+![Conexión correcta entre PHP y MySQL](capturas/conexion-php-mysql.png)
+![Base de datos TIENDA en phpMyAdmin](capturas/base-datos-tienda-phpmyadmin.png)
+
+## 13. Creación de las tablas en MySQL
+
+A partir del modelo relacional definido previamente, se han creado las nueve tablas necesarias en la base de datos `TIENDA`.
+
+Las tablas creadas son:
+
+- `usuario`
+- `direccion`
+- `marca`
+- `color`
+- `talla`
+- `material`
+- `corbata`
+- `pedido`
+- `detalle_pedido`
+
+Cada tabla dispone de sus campos, tipos de datos, clave primaria y restricciones correspondientes.
+
+La siguiente captura muestra las tablas creadas correctamente en phpMyAdmin.
+
+![Tablas creadas en la base de datos TIENDA](capturas/tablas-tienda-phpmyadmin.png)
+
+### 13.1 Comprobación de claves y restricciones
+
+Se comprobó que todas las tablas disponen de su clave primaria correspondiente y que las restricciones definidas en el script SQL se crearon correctamente.
+
+Entre las restricciones verificadas se encuentran:
+
+- Valores únicos para correos electrónicos y nombres de clasificación.
+- Índice único compuesto en `detalle_pedido`.
+- Restricciones `CHECK` para evitar precios, importes o cantidades no válidas.
+
+![Restricciones CHECK de la base de datos TIENDA](capturas/restricciones-check.png)
+
+## 14. Relaciones entre las tablas
+
+Después de crear las tablas, se añadieron las claves foráneas necesarias para establecer las relaciones definidas en el modelo entidad-relación y en el modelo relacional.
+
+Las relaciones creadas son:
+
+- `direccion.id_usuario` → `usuario.id_usuario`
+- `pedido.id_usuario` → `usuario.id_usuario`
+- `pedido.id_direccion` → `direccion.id_direccion`
+- `corbata.id_talla` → `talla.id_talla`
+- `corbata.id_color` → `color.id_color`
+- `corbata.id_material` → `material.id_material`
+- `corbata.id_marca` → `marca.id_marca`
+- `detalle_pedido.id_pedido` → `pedido.id_pedido`
+- `detalle_pedido.id_corbata` → `corbata.id_corbata`
+
+La siguiente captura muestra las nueve claves foráneas creadas correctamente en MySQL.
+
+![Claves foráneas de la base de datos TIENDA](capturas/claves-foraneas-tienda.png)
+
+## 15. Inserción de datos de prueba
+
+Para comprobar el funcionamiento de la base de datos, se insertaron registros de prueba en las tablas de marcas, colores, tallas, materiales, usuarios, direcciones, corbatas, pedidos y detalles de pedido.
+
+Los datos se insertaron respetando el orden de las claves foráneas para evitar errores de integridad referencial.
+
+Posteriormente, se realizó una consulta combinando las tablas `corbata`, `talla`, `color`, `material` y `marca`.
+
+La consulta permitió recuperar correctamente:
+
+- El nombre de la corbata.
+- El precio.
+- El stock disponible.
+- La talla.
+- El color.
+- El material.
+- La marca.
+
+## 16. Conexión entre PHP y MySQL
+
+La conexión con la base de datos `TIENDA` se ha implementado mediante PDO.
+
+El código de conexión se encuentra separado del archivo principal de la aplicación en:
+
+`src/config/database.php`
+
+Esta organización permite reutilizar la conexión en diferentes partes del proyecto y facilita el mantenimiento del código.
+
+Las credenciales no se escriben directamente en PHP. La configuración se obtiene mediante las variables de entorno definidas en Docker:
+
+- `DB_HOST`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+
+La conexión utiliza el juego de caracteres `utf8mb4` y tiene activado el modo de excepciones para controlar posibles errores.
+
+Se comprobó su funcionamiento desde `index.php`, mostrando el mensaje:
+
+> Conexión correcta con la base de datos TIENDA.
+
+## 17. Consulta de corbatas desde PHP
+
+Se ha creado una consulta en PHP para recuperar las corbatas activas almacenadas en la base de datos `TIENDA`.
+
+La consulta utiliza varias operaciones `INNER JOIN` para obtener también la información relacionada de las tablas:
+
+- `talla`
+- `color`
+- `material`
+- `marca`
+
+El código se encuentra en:
+
+`src/consultas/corbatas.php`
+
+La consulta recupera para cada corbata:
+
+- Identificador.
+- Nombre.
+- Descripción.
+- Precio.
+- Stock.
+- Imagen.
+- Talla.
+- Color.
+- Material.
+- Marca.
+
+La siguiente captura muestra los cinco registros recuperados correctamente desde PHP.
+
+![Consulta de corbatas desde PHP](capturas/consulta-corbatas-php.png)
+
+## 18. Visualización de las corbatas
+
+Los datos recuperados desde MySQL se muestran en la página principal mediante tarjetas HTML.
+
+Cada tarjeta presenta:
+
+- Nombre de la corbata.
+- Descripción.
+- Precio.
+- Marca.
+- Talla.
+- Color.
+- Material.
+- Stock disponible.
+
+Los datos se recorren mediante una estructura `foreach` y se escapan con `htmlspecialchars` antes de mostrarse en la página.
+
+También se ha incluido control para mostrar un mensaje cuando no existen resultados o cuando se produce un error de conexión o consulta.
+
+![Catálogo de corbatas](capturas/catalogo-corbatas.png)
+
+## 19. Pruebas realizadas
+
+Se realizaron distintas pruebas para comprobar el funcionamiento del proyecto y el control de situaciones incorrectas.
+
+### 19.1 Funcionamiento normal
+
+Se comprobó que la aplicación se conecta correctamente con MySQL y recupera las cinco corbatas almacenadas en la base de datos.
+
+También se verificó que las relaciones mediante `INNER JOIN` permiten obtener correctamente la talla, el color, el material y la marca de cada corbata.
+
+![Funcionamiento normal del catálogo](capturas/prueba-funcionamiento-normal.png)
+
+### 19.2 Consulta sin resultados
+
+Se modificó temporalmente la condición de la consulta para que no devolviera ningún registro.
+
+La aplicación mostró correctamente el mensaje:
+
+> No hay corbatas disponibles en este momento.
+
+![Prueba de consulta sin resultados](capturas/prueba-sin-resultados.png)
+
+### 19.3 Error de conexión
+
+Se modificó temporalmente el nombre de la base de datos para provocar un error de conexión.
+
+La aplicación controló la excepción y mostró un mensaje genérico sin exponer información sensible:
+
+> No se pudieron recuperar las corbatas.
+
+![Prueba de error de conexión](capturas/prueba-error-conexion.png)
+
+### 19.4 Restricciones de la base de datos
+
+Se intentó insertar una corbata con un precio negativo.
+
+MySQL rechazó la operación debido a la restricción `chk_corbata_precio`, comprobando que las reglas de integridad funcionan correctamente.
+
+![Prueba de restricción de precio](capturas/prueba-restriccion-precio.png)
+
+Después de las pruebas, se restauró la configuración original y se comprobó nuevamente que las cinco corbatas se muestran correctamente.
+
+## 20. Tecnologías utilizadas
 
 - PHP
 - MySQL
@@ -606,7 +845,7 @@ El modelo relacional transforma las entidades del modelo entidad-relación en ta
 - Visual Studio Code 
 - PHPMyAdmin
 
-## 13. Planificación del proyecto
+## 21. Planificación del proyecto
 
 El proyecto se organiza mediante un tablero de Trello con las siguientes listas:
 
